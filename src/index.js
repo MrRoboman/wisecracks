@@ -2,18 +2,24 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import io from 'socket.io-client'
 
+import Login from './login'
+
 class App extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { name: '' }
+    this.state = { gameState: 'LOGIN' }
   }
 
-  componentDidMount() {
+  componentWillMount() {
     document.addEventListener('touchmove', function(e) {
     	e.preventDefault();
     }, false);
 
     this.socket = io('/')
+
+    this.socket.on('gameState', gameState => {
+      this.setState({ gameState: gameState })
+    })
 
     this.socket.on('join', name => {
       console.log(name + " joined!")
@@ -29,37 +35,13 @@ class App extends React.Component {
     })
   }
 
-  onChange = event => {
-    this.setState({ name: event.target.value })
-  }
-
-  handleSubmit = event => {
-    this.socket.emit('join', name)
-    this.setState({ nextPage: true })
-  }
-
-  renderButton = () => {
-    if(/^\S/.test(this.state.name)) {
-      return <button onClick={this.handleSubmit}>enter the game</button>
-    }
-  }
-
   render() {
-    if(this.state.nextPage) {
-      return <span>Game on {this.state.name}</span>
+
+    switch(this.state.gameState) {
+      case "LOGIN": return <Login socket={this.socket}/>
+      case "LOBBY": return <span>Dont be a freak</span>
+      default: return <span>ERROR</span>
     }
-    return (
-      <div className="welcome">
-        <h1>Wise Cracks!</h1>
-        <input
-          type='text'
-          placeholder='enter your name'
-          value={this.state.name}
-          onChange={this.onChange}
-          />
-        {this.renderButton()}
-      </div>
-    )
   }
 }
 

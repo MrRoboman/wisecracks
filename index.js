@@ -15,6 +15,7 @@ app.use(webpackDevMiddleware(webpack(webpackConfig)))
 app.use(bodyParser.urlencoded({ extended: false }))
 
 const clients = {}
+
 function broadcastPlayers() {
   const players = []
   for(var key in clients) {
@@ -30,6 +31,7 @@ io.on('connection', socket => {
 
   socket.on('join', name => {
     clients[socket.id].name = name
+    socket.emit('gameState', 'LOBBY')
     socket.broadcast.emit('join', name)
     broadcastPlayers()
   })
