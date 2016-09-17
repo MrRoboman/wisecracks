@@ -5,6 +5,7 @@ const socketIo = require('socket.io')
 const webpack = require('webpack')
 const webpackDevMiddleware = require('webpack-dev-middleware')
 const webpackConfig = require('./webpack.config.js')
+const c = require('./constants')
 
 const app = express()
 const server = http.createServer(app)
@@ -22,32 +23,25 @@ function broadcastPlayers() {
     if(clients[key].name)
       players.push(clients[key])
   }
-  io.sockets.emit('players', players)
+  io.sockets.emit(c.PLAYERS, players)
 }
 
-io.on('connection', socket => {
+io.on(c.CONNECTION, socket => {
 
   clients[socket.id] = { name: '' }
 
-  socket.on('join', name => {
+  socket.on(c.JOIN, name => {
     clients[socket.id].name = name
-    socket.emit('gameState', 'LOBBY')
-    socket.broadcast.emit('join', name)
+    socket.emit(c.GAMESTATE, c.LOBBY)
+    socket.broadcast.emit(c.JOIN, name)
     broadcastPlayers()
   })
 
-  socket.on('disconnect', () => {
+  socket.on(c.DISCONNECT, () => {
     const name = clients[socket.id].name
     delete clients[socket.id]
-    socket.broadcast.emit('leave', name)
+    socket.broadcast.emit(c.LEAVE, name)
     broadcastPlayers()
-  })
-
-  socket.on('message', body => {
-    socket.broadcast.emit('message', {
-      body,
-      from: socket.id.slice(8)
-    })
   })
 
 })

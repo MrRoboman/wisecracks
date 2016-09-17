@@ -1,4 +1,5 @@
 import React from 'react'
+import c from '../constants'
 
 class Login extends React.Component {
   constructor(props) {
@@ -11,7 +12,7 @@ class Login extends React.Component {
   }
 
   handleSubmit = event => {
-    this.props.socket.emit('join', name)
+    this.props.socket.emit(c.JOIN, name)
   }
 
   render() {
