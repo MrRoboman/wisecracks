@@ -1,3 +1,5 @@
+'use strict'
+
 const express = require('express')
 const http = require('http')
 const bodyParser = require('body-parser')
@@ -5,6 +7,7 @@ const socketIo = require('socket.io')
 const webpack = require('webpack')
 const webpackDevMiddleware = require('webpack-dev-middleware')
 const webpackConfig = require('./webpack.config.js')
+
 const c = require('./constants')
 
 const app = express()
@@ -15,33 +18,79 @@ app.use(express.static(__dirname + '/public'))
 app.use(webpackDevMiddleware(webpack(webpackConfig)))
 app.use(bodyParser.urlencoded({ extended: false }))
 
-const clients = {}
 
-function broadcastPlayers() {
-  const players = []
-  for(var key in clients) {
-    if(clients[key].name)
-      players.push(clients[key])
+class Player {
+  constructor() {
+    this.name = ''
+    this.messageComplete = false
   }
-  io.sockets.emit(c.PLAYERS, players)
 }
+
+class Clients {
+  constructor() {
+    this.clients = {}
+    // this.players = []
+  }
+
+  add(id) {
+    const player = new Player
+    this.clients[id] = player
+    // this.players.push(player)
+  }
+
+  remove(id) {
+    const client = this.clients[id]
+    delete this.clients[id]
+    return client
+  }
+
+  name(id, name) {
+    if(name === undefined) {
+      return this.clients[id].name
+    } else {
+      this.clients[id].name = name
+    }
+  }
+
+  player(id) {
+    return this.clients[id]
+  }
+
+  players() {
+    const players = []
+    for(let sckId in this.clients) {
+      if(this.clients[sckId].name)
+        players.push(this.clients[sckId])
+    }
+    return players
+  }
+}
+
+const clients = new Clients
 
 io.on(c.CONNECTION, socket => {
 
-  clients[socket.id] = { name: '' }
+  const id = socket.id
+  clients.add(id)
 
   socket.on(c.JOIN, name => {
-    clients[socket.id].name = name
-    socket.emit(c.GAMESTATE, c.LOBBY)
-    socket.broadcast.emit(c.JOIN, name)
-    broadcastPlayers()
+    clients.name(id, name)
+    socket.emit(c.GAMESTATE, {
+      room: c.GAME,
+      players: clients.players()
+    })
+    socket.broadcast.emit(c.JOIN, {
+      joiningPlayer: clients.player(id).name,
+      players: clients.players()
+    })
   })
 
   socket.on(c.DISCONNECT, () => {
-    const name = clients[socket.id].name
-    delete clients[socket.id]
-    socket.broadcast.emit(c.LEAVE, name)
-    broadcastPlayers()
+    const player = clients.remove(id)
+    socket.broadcast.emit(c.LEAVE, {
+      leavingPlayer: player.name,
+      players: clients.players()
+    })
   })
 
 })

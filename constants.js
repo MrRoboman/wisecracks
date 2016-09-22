@@ -14,6 +14,6 @@ module.exports = {
   GAMESTATE: 'GAMESTATE',
 
   // GAME_STATEs
-  LOBBY: 'LOBBY',
-  LOGIN: 'LOGIN'
+  LOGIN: 'LOGIN',
+  GAME: 'GAME'
 }

@@ -5,11 +5,15 @@ import io from 'socket.io-client'
 import c from '../constants'
 
 import Login from './login'
+import Game from './game'
 
 class App extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { gameState: c.LOGIN }
+    this.state = {
+      room: c.LOGIN,
+      players: []
+    }
   }
 
   componentWillMount() {
@@ -19,29 +23,29 @@ class App extends React.Component {
 
     this.socket = io('/')
 
-    this.socket.on(c.JOIN, name => {
-      console.log(name + ' joined!')
+    this.socket.on(c.JOIN, data => {
+      console.log(data.joiningPlayer + ' joined!')
+      this.setState({ players: data.players })
     })
 
-    this.socket.on(c.LEAVE, name => {
-      console.log(name + ' left!')
+    this.socket.on(c.LEAVE, data => {
+      console.log(data.leavingPlayer + ' left!')
+      this.setState({ players: data.players })
     })
 
-    this.socket.on(c.PLAYERS, players => {
-      console.log(players)
-      this.setState({ players })
-    })
-
-    this.socket.on(c.GAMESTATE, gameState => {
-      this.setState({ gameState })
+    this.socket.on(c.GAMESTATE, data => {
+      this.setState({
+        room: data.room,
+        players: data.players
+      })
     })
   }
 
   render() {
 
-    switch(this.state.gameState) {
+    switch(this.state.room) {
       case c.LOGIN: return <Login socket={this.socket}/>
-      case c.LOBBY: return <span>Dont be a freak</span>
+      case c.GAME: return <Game socket={this.socket} players={this.state.players}/>
       default: return <span>ERROR</span>
     }
   }

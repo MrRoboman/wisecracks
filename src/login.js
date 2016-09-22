@@ -12,7 +12,7 @@ class Login extends React.Component {
   }
 
   handleSubmit = event => {
-    this.props.socket.emit(c.JOIN, name)
+    this.props.socket.emit(c.JOIN, this.state.name)
   }
 
   render() {
